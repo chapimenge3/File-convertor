@@ -8,7 +8,7 @@ from telegram.ext import (
     Filters,
     ConversationHandler,
     CallbackContext,
-    conversationhandler,
+    conversationhandler, filters,
 )
 
 from queue import Queue
@@ -41,7 +41,7 @@ from_pdf_reply_keyboard = [
         "PDF to JPG",
         "PDF to Word",
     ],
-    ["PDF to PPT", " PDF to Excel"],
+    ["PDF to PPT", "PDF to Excel"],
     ["Back", "Main Menu"],
 ]
 
@@ -57,7 +57,7 @@ from_pdf_markup = ReplyKeyboardMarkup(from_pdf_reply_keyboard, one_time_keyboard
 choice_markup = ReplyKeyboardMarkup(first_choice_keyboard, one_time_keyboard=True)
 
 
-CHOOSE, TO_PDF_MAIN, FROM_PDF_MAIN = 13, 14, 15
+CHOOSE, TO_PDF_MAIN, FROM_PDF_MAIN,STAROVER = range(13,17)
 
 TO_PDF, FROM_PDF = 11, 12
 
@@ -73,9 +73,23 @@ def start(update: Update, context: CallbackContext) -> int:
         "File Must be less than 10MB , if you have more than 10 MB File please Contact @chapimenge",
         reply_markup=choice_markup,
     )
-    context.user_data['Back'] = CHOOSE
+    context.user_data['Back'] = [ start ,  ]
+            
+    # context.user_data['Back'] = CHOOSE
+    
     return CHOOSE
 
+def startover(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text(
+        "Hi! My name is Doctor File Convertor Bot. I will convert any files to and from PDF and other Formats. \n"
+        "to see how to use the bot send /help\n"
+        "File Must be less than 10MB , if you have more than 10 MB File please Contact @chapimenge",
+        reply_markup=choice_markup,
+    )
+    if 'Back' in context.user_data:
+        context.user_data['Back'] = [ startover ,  ]    
+    # context.user_data['Back'] = CHOOSE
+    return CHOOSE
 
 def to_pdf_convertor(update: Update, context: CallbackContext):
 
@@ -83,7 +97,7 @@ def to_pdf_convertor(update: Update, context: CallbackContext):
         "Please Choose What Do you want to convert\n", reply_markup=to_pdf_markup
     )
     
-    context.user_data['Back'] = TO_PDF_MAIN
+    context.user_data['Back'].append(to_pdf_convertor) 
     
     return TO_PDF_MAIN
 
@@ -91,19 +105,22 @@ def to_pdf_convertor(update: Update, context: CallbackContext):
 def from_pdf_convertor(update: Update, context: CallbackContext):
 
     update.message.reply_text(
-        "Please Choose What Do you want to convert\n", reply_markup=to_pdf_markup
+        "Please Choose What Do you want to convert\n", reply_markup=from_pdf_markup
     )
-    context.user_data['Back'].put(FROM_PDF_MAIN)
+    context.user_data['Back'].append(from_pdf_convertor)
     
     return FROM_PDF_MAIN
 
 def back(update: Update, context: CallbackContext):
-    
-    
-    BACK_ = context.user_data['Back']
-        
-    # print(BACK_)
-    return BACK_ if BACK_ else CHOOSE 
+    BACK_ = startover
+    print(context.user_data['Back'])
+    if len(context.user_data['Back']) > 1:
+        context.user_data['Back'].pop()
+        BACK_ = context.user_data['Back'][-1]
+        return BACK_(update, context)
+    else:
+        return BACK_(update, context)        
+
 
 
 def main():
@@ -111,8 +128,14 @@ def main():
     dispatcher = updater.dispatcher
 
     conv_hander = ConversationHandler(
+        allow_reentry=True,
         entry_points=[CommandHandler("start", start)],
         states={
+            # STAROVER : [
+            #     MessageHandler(
+            #         Filters.all(startover)
+            #     ),
+            # ],
             CHOOSE: [
                 MessageHandler(
                     Filters.regex(
@@ -126,6 +149,11 @@ def main():
                     ),
                     from_pdf_convertor,
                 ),
+                MessageHandler(
+                    Filters.all,
+                    startover,
+                ),
+                
             ],
             TO_PDF_MAIN: [
                 MessageHandler(
@@ -162,15 +190,45 @@ def main():
                     Filters.regex(
                         "^(Main Menu)$",
                     ),
-                    from_pdf_convertor,
+                    startover,
                 ),
             ],
             FROM_PDF_MAIN: [
                 MessageHandler(
                     Filters.regex(
-                        "^(Goes Convert from PDF)$",
+                        "^(PDF to JPG)$",
                     ),
                     from_pdf_convertor,
+                ),
+                MessageHandler(
+                    Filters.regex(
+                        "^(PDF to Word)$",
+                    ),
+                    from_pdf_convertor,
+                ),
+                MessageHandler(
+                    Filters.regex(
+                        "^(PDF to PPT)$",
+                    ),
+                    from_pdf_convertor,
+                ),
+                MessageHandler(
+                    Filters.regex(
+                        "^(PDF to Excel)$",
+                    ),
+                    from_pdf_convertor,
+                ),
+                MessageHandler(
+                    Filters.regex(
+                        "^(Back)$",
+                    ),
+                    from_pdf_convertor,
+                ),
+                MessageHandler(
+                    Filters.regex(
+                        "^(Main Menu)$",
+                    ),
+                    startover,
                 ),
             ],
         },
