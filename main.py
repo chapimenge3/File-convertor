@@ -1,4 +1,5 @@
 import logging
+from time import perf_counter
 
 # PTB imports
 from telegram import ReplyKeyboardMarkup, Update, message
@@ -41,7 +42,7 @@ caption = "😁 Converted By @fileconverterallbot made by @chapimenge"
 
 to_pdf_reply_keyboard = [
     [
-        "JPG to PDF",
+        "image to PDF",
         "Word to PDF",
     ],
     ["PPT to PDF", "Excel To PDf"],
@@ -49,7 +50,7 @@ to_pdf_reply_keyboard = [
 ]
 from_pdf_reply_keyboard = [
     [
-        "PDF to JPG",
+        "PDF to Images",
         "PDF to Word",
     ],
     ["PDF to PPT", "PDF to Excel"],
@@ -78,10 +79,12 @@ JPG_PDF, WORD_PDF, PPT_PDF, EXCEL_PDF, HTML_PDF = range(5, 10)
 
 
 def done(update, context):
-
+    if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
+        del_user_files(context.user_data["Files"])
     update.message.reply_text(
-        "To start over send me /start"
+        "To start over send me /start\n"
         "Thank you for using My bot, if you have any comment contact me @chapimenge",
+        reply_markup=telegram.ReplyKeyboardRemove(),
     )
 
     return ConversationHandler.END
@@ -91,18 +94,11 @@ def start(update: Update, context: CallbackContext) -> int:
     # for i in update:
     #     print(i)
     # print(dir(update))
-    print("Startover")
+    # print("Startover")
     if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
-        print("Files yess")
-        for file in context.user_data["Files"]:
-            file_address = os.path.join(_BASE_DIR_FILE, file)
-            print(file_address)
-            try:
-                os.remove(file_address)
-            except Exception as e:
-                pass
+        del_user_files(context.user_data["Files"])
     update.message.reply_text(
-        "Hi! My name is Doctor File Convertor Bot. I will convert any files to and from PDF and other Formats. \n"
+        "Hi! My name is File Convertor Bot. I will convert any files to and from PDF and other Formats. \n"
         "to see how to use the bot send /help\n"
         "File Must be less than 10MB , if you have more than 10 MB File please Contact @chapimenge",
         reply_markup=choice_markup,
@@ -121,8 +117,8 @@ def startover(update: Update, context: CallbackContext) -> int:
         del_user_files(context.user_data["Files"])
 
     update.message.reply_text(
-        "Hi! My name is Doctor File Convertor Bot. I will convert any files to and from PDF and other Formats. \n"
-        "to see how to use the bot send /help\n"
+        "Glad to see you are still here\n"
+        "To see how to use the bot send /help\n"
         "File Must be less than 10MB , if you have more than 10 MB File please Contact @chapimenge",
         reply_markup=choice_markup,
     )
@@ -157,7 +153,9 @@ def from_pdf_convertor(update: Update, context: CallbackContext):
 
 def back(update: Update, context: CallbackContext):
     BACK_ = startover
-    # print(context.user_data["Back"])
+    if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
+        del_user_files(context.user_data["Files"])
+
     if len(context.user_data["Back"]) > 1:
         context.user_data["Back"].pop()
         BACK_ = context.user_data["Back"][-1]
@@ -169,7 +167,6 @@ def back(update: Update, context: CallbackContext):
 def jpg_to_pdf(update, context):
     done_keyboard = [["Done"]]
     done_keyboard_markup = ReplyKeyboardMarkup(done_keyboard, one_time_keyboard=True)
-
     # print(update.message)
     has_photo = len(update.message.photo) if update.message.photo else False
     bot = context.bot
@@ -182,11 +179,12 @@ def jpg_to_pdf(update, context):
             for fil in update.message.photo
         ]
         file_.sort()
+        # print("Files")
         # print(file_)
         file_name = str(uuid.uuid1())
-        download_file = bot.getFile(file_[0][0])
+        download_file = bot.getFile(file_[-1][1])
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
-        print("Download Address", download_address)
+        # print("Download Address", download_address)
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
         update.message.reply_text("I received", reply_markup=done_keyboard_markup)
@@ -196,7 +194,7 @@ def jpg_to_pdf(update, context):
         file_name = str(uuid.uuid1()) + "." + file_ext
         file_ = [in_file["file_size"], in_file["file_id"], in_file["file_unique_id"]]
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
-        print("Download Address", download_address)
+        # print("Download Address", download_address)
         download_file = bot.getFile(update.message.document["file_id"])
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
@@ -233,7 +231,7 @@ def done_jpg_to_pdf(update, context):
             bot.send_document(
                 chat_id=chat_id,
                 document=pdf_file,
-                filename="Converted image to pdf.pdf",
+                filename="fileconverterallbot image-to-pdf.pdf",
                 caption=caption,
             )
         os.remove(pdf_address)
@@ -242,6 +240,11 @@ def done_jpg_to_pdf(update, context):
         return done(update, context)
 
     except Exception as e:
+        print("*****This is Traceback*****")
+        import traceback
+
+        traceback.print_exc()
+        print("*****This is Traceback*****")
         del_one_file(pdf_address)
         update.message.reply_text("Sorry 😔, Something is wrong! Please Try Again Later")
         return startover(update, context)
@@ -258,7 +261,7 @@ def word_to_pdf(update, context):
         )
         return WORD_PDF
     else:
-        print(has_doc)
+        # print(has_doc)
         if "Files" not in context.user_data:
             context.user_data["Files"] = []
         file_name = str(uuid.uuid1())
@@ -280,7 +283,7 @@ def word_to_pdf(update, context):
             )
         else:
             file_address = os.path.join(_BASE_DIR_FILE, convert_2_pdf)
-            print(file_address)
+            # print(file_address)
             with open(file_address, "rb") as pdf_file:
                 bot.edit_message_text(
                     chat_id=chat_id,
@@ -299,11 +302,6 @@ def word_to_pdf(update, context):
 
 
 def ppt_to_pdf(update, context):
-    print("PowerPoint")
-    print("PowerPoint")
-    print("PowerPoint")
-    print("PowerPoint")
-    print(update)
     has_doc = update.message.document or False
     bot = context.bot
     chat_id = update.message.chat.id
@@ -314,7 +312,7 @@ def ppt_to_pdf(update, context):
         )
         return PPT_PDF
     else:
-        print(has_doc)
+        # print(has_doc)
         if "Files" not in context.user_data:
             context.user_data["Files"] = []
         file_name = str(uuid.uuid1())
@@ -336,7 +334,7 @@ def ppt_to_pdf(update, context):
             )
         else:
             file_address = os.path.join(_BASE_DIR_FILE, convert_2_pdf)
-            print(file_address)
+            # print(file_address)
             with open(file_address, "rb") as pdf_file:
                 bot.edit_message_text(
                     chat_id=chat_id,
@@ -355,10 +353,10 @@ def ppt_to_pdf(update, context):
 
 
 def excel_to_pdf(update, context):
-    print("excel excel")
-    print(update.message.document)
+    # print("excel excel")
+    # print(update.message.document)
     has_doc = update.message.document or False
-    
+
     bot = context.bot
     chat_id = update.message.chat.id
     if not has_doc:
@@ -368,7 +366,7 @@ def excel_to_pdf(update, context):
         )
         return EXCEL_PDF
     else:
-        print(has_doc)
+        # print(has_doc)
         if "Files" not in context.user_data:
             context.user_data["Files"] = []
         file_name = str(uuid.uuid1())
@@ -394,7 +392,7 @@ def excel_to_pdf(update, context):
                 bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=ms.message_id,
-                    text="Your file is Ready✅",
+                    text="Your file is Ready✅\nNow I am Sending the file",
                 )
                 bot.send_document(
                     chat_id=chat_id,
@@ -405,6 +403,136 @@ def excel_to_pdf(update, context):
             del_one_file(convert_2_pdf)
             del_user_files(context.user_data["Files"])
             return done(update, context)
+
+
+def pdf_to_image(update, context):
+    has_doc = update.message.document or False
+    bot = context.bot
+    chat_id = update.message.chat.id
+    if has_doc:
+        ms = update.message.reply_text("Downloading the file")
+        file_name = str(uuid.uuid1()) + ".pdf"
+        file_address = os.path.join(_BASE_DIR_FILE, file_name)
+        download_file = bot.getFile(has_doc["file_id"])
+        download_file.download(custom_path=file_address)
+        context.user_data["Files"].append(file_name)
+        ms = bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=ms.message_id,
+            text="Successfully Downloaded\nNow i am converting to images 🖼...",
+        )
+        output_folder = process_pdf_to_images(file_name)
+        if output_folder == -1:
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text="Sorry there is some problem couldn't convert your file 😔",
+            )
+            return startover(update, context)
+        else:
+            ms = bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text="Your file is Ready✅\n Now I Am sending the images",
+            )
+            try:
+                count = 1
+                for image in os.listdir(output_folder):
+                    photo_address = os.path.join(output_folder, image)
+                    with open(photo_address, "rb") as file:
+                        bot.send_document(
+                            chat_id=chat_id,
+                            document=file,
+                            filename=f"image {count}.pdf",
+                            caption=caption,
+                        )
+                    count += 1
+            except:
+                print("*******traceback******")
+                import traceback
+
+                traceback.print_exc()
+                print("*******traceback******")
+
+                try:
+                    del_one_file(file_address)
+                    import shutil
+
+                    shutil.rmtree(output_folder)
+                except:
+                    pass
+                update.message.reply_text(
+                    "Sorry there is some problem couldn't convert your file 😔"
+                )
+                return startover(update, context)
+            try:
+                del_one_file(file_address)
+                import shutil
+
+                shutil.rmtree(output_folder)
+            except:
+                pass
+            return done(update, context)
+    update.message.reply_text(
+        "Please Send me the PDF file.\nPlease Make Sure the PDF File is not more than 25MB"
+    )
+    return PDF_JPG
+
+
+def pdf_to_word(update, context):
+    has_doc = update.message.document or False
+    bot = context.bot
+    chat_id = update.message.chat.id
+    if has_doc:
+        print(has_doc)
+        if "Files" not in context.user_data:
+            context.user_data["Files"] = []
+            
+        ms = update.message.reply_text("Downloading the file")
+        file_name = str(uuid.uuid1()) + ".pdf"
+        file_address = os.path.join(_BASE_DIR_FILE, file_name)
+        download_file = bot.getFile(has_doc["file_id"])
+        download_file.download(custom_path=file_address)
+        context.user_data["Files"].append(file_name)
+        ms = bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=ms.message_id,
+            text="Successfully Downloaded\nNow i am converting to word(document file) 🖼...",
+        )
+        import time
+
+        t0 = perf_counter()
+        converted_file = process_pdf_to_word(file_name)
+        l0 = perf_counter()
+        del_one_file(file_name)
+        if converted_file == -1:
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text="Sorry there is some problem couldn't convert your file 😔",
+            )
+            return startover(update, context)
+        else:
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text=f"Your file is Ready✅\nNow I am sending you file\nYour file is converted to docx file with {l0-t0:.2f} seconds",
+            )
+            with open(converted_file, "rb") as file:
+                bot.send_document(
+                    chat_id=chat_id,
+                    document=file,
+                    filename=f"converted word.pdf",
+                    caption=caption,
+                )
+            del_one_file(converted_file)
+            return done(update, context)        
+        return PDF_WORD
+    
+    update.message.reply_text(
+        "Please Send me the PDF file.\nPlease Make Sure the PDF File is not more than 25MB"
+    )
+    return PDF_WORD
 
 
 def main():
@@ -436,7 +564,7 @@ def main():
             TO_PDF_MAIN: [
                 MessageHandler(
                     Filters.regex(
-                        "^(JPG to PDF)$",
+                        "^(image to PDF)$",
                     ),
                     jpg_to_pdf,
                     # run_async=True
@@ -475,15 +603,15 @@ def main():
             FROM_PDF_MAIN: [
                 MessageHandler(
                     Filters.regex(
-                        "^(PDF to JPG)$",
+                        "^(PDF to Images)$",
                     ),
-                    from_pdf_convertor,
+                    pdf_to_image,
                 ),
                 MessageHandler(
                     Filters.regex(
                         "^(PDF to Word)$",
                     ),
-                    from_pdf_convertor,
+                    pdf_to_word,
                 ),
                 MessageHandler(
                     Filters.regex(
@@ -535,8 +663,14 @@ def main():
                     | Filters.document.file_extension("xlsb")
                     | Filters.document.file_extension("xltx")
                     | Filters.document.file_extension("xltm"),
-                    excel_to_pdf 
+                    excel_to_pdf,
                 )
+            ],
+            PDF_JPG: [
+                MessageHandler(Filters.document.pdf, pdf_to_image),
+            ],
+            PDF_WORD: [
+                MessageHandler(Filters.document.pdf, pdf_to_word),
             ],
         },
         fallbacks=[
