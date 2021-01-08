@@ -534,6 +534,12 @@ def pdf_to_word(update, context):
     )
     return PDF_WORD
 
+def pdf_to_ppt(update, context):
+    update.message.reply_text("This Feature is not yet Done.\nWe are working on it. Soon It will be available!")
+    return startover(update, context)
+def pdf_to_excel(update, context):
+    update.message.reply_text("This Feature is not yet Done.\nWe are working on it. Soon It will be available!")
+    return startover(update, context)
 
 def main():
     updater = Updater(token=TOKEN_)
@@ -617,19 +623,19 @@ def main():
                     Filters.regex(
                         "^(PDF to PPT)$",
                     ),
-                    from_pdf_convertor,
+                    pdf_to_ppt,
                 ),
                 MessageHandler(
                     Filters.regex(
                         "^(PDF to Excel)$",
                     ),
-                    from_pdf_convertor,
+                    pdf_to_excel,
                 ),
                 MessageHandler(
                     Filters.regex(
                         "^(Back)$",
                     ),
-                    from_pdf_convertor,
+                    back,
                 ),
                 MessageHandler(
                     Filters.regex(
