@@ -184,7 +184,7 @@ def jpg_to_pdf(update, context):
         file_.sort()
         # print(file_)
         file_name = str(uuid.uuid1())
-        download_file = bot.getFile(file_[1][1])
+        download_file = bot.getFile(file_[0][0])
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         print("Download Address", download_address)
         download_file.download(custom_path=download_address)
