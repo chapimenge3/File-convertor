@@ -509,7 +509,7 @@ def pdf_to_image(update, context):
                         bot.send_document(
                             chat_id=chat_id,
                             document=file,
-                            filename=f"image {count}.pdf",
+                            filename=f"image {count}.jpeg",
                             caption=caption,
                         )
                     count += 1
@@ -598,7 +598,7 @@ def pdf_to_word(update, context):
                 bot.send_document(
                     chat_id=chat_id,
                     document=file,
-                    filename=f"converted word.pdf",
+                    filename=f"converted word.docx",
                     caption=caption,
                 )
             del_one_file(converted_file)
