@@ -81,6 +81,9 @@ JPG_PDF, WORD_PDF, PPT_PDF, EXCEL_PDF, HTML_PDF = range(5, 10)
 def done(update, context):
     if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
         del_user_files(context.user_data["Files"])
+    if "SIZE" in context.user_data:
+        context.user_data["SIZE"] = 0
+        
     update.message.reply_text(
         "To start over send me /start\n"
         "Thank you for using My bot, if you have any comment contact me @chapimenge",
@@ -95,6 +98,8 @@ def start(update: Update, context: CallbackContext) -> int:
     #     print(i)
     # print(dir(update))
     # print("Startover")
+    if "SIZE" in context.user_data:
+        context.user_data["SIZE"] = 0
     if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
         del_user_files(context.user_data["Files"])
     update.message.reply_text(
@@ -115,7 +120,8 @@ def start(update: Update, context: CallbackContext) -> int:
 def startover(update: Update, context: CallbackContext) -> int:
     if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
         del_user_files(context.user_data["Files"])
-
+    if "SIZE" in context.user_data:
+        context.user_data["SIZE"] = 0
     update.message.reply_text(
         "Glad to see you are still here\n"
         "To see how to use the bot send /help\n"
@@ -173,6 +179,8 @@ def jpg_to_pdf(update, context):
     has_document = update.message.document or False
     if "Files" not in context.user_data:
         context.user_data["Files"] = []
+    if "SIZE" is not context.user_data:
+        context.user_data["SIZE"] = 0
     if has_photo:
         file_ = [
             [fil["file_size"], fil["file_id"], fil["file_unique_id"]]
@@ -182,6 +190,11 @@ def jpg_to_pdf(update, context):
         # print("Files")
         # print(file_)
         file_name = str(uuid.uuid1())
+        context.user_data["SIZE"] += int( 0.5 + (file_[-1][0]/10**6) )
+        if  context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            return JPG_PDF
+        print("FIles size" , file_[-1][0]) 
         download_file = bot.getFile(file_[-1][1])
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         # print("Download Address", download_address)
@@ -192,6 +205,12 @@ def jpg_to_pdf(update, context):
         in_file = update.message.document
         file_ext = in_file["mime_type"].split("/")[-1]
         file_name = str(uuid.uuid1()) + "." + file_ext
+        context.user_data["SIZE"] += int( 0.5 + (in_file['file_size']/10**6) )
+        if  context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            return JPG_PDF
+        # print(f"File size = {in_file['file_size']}")
+        
         file_ = [in_file["file_size"], in_file["file_id"], in_file["file_unique_id"]]
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         # print("Download Address", download_address)
@@ -217,6 +236,14 @@ def done_jpg_to_pdf(update, context):
         "Please wait it is converting your images to pdf ....."
     )
     # print(mid)
+    if "SIZE" not in context.user_data:
+       context.user_data["SIZE"] = 0
+        
+    if context.user_data["SIZE"] > 50:
+        update.message.reply_text("Total Fize is more than your limitation")
+        del_user_files(context.user_data["Files"])
+        return startover(update, context)
+    
     bot = context.bot
     chat_id = update.message.chat.id
     pdf_name = str(uuid.uuid1())
@@ -254,6 +281,9 @@ def word_to_pdf(update, context):
     has_doc = update.message.document or False
     bot = context.bot
     chat_id = update.message.chat.id
+    if "SIZE" not in context.user_data:
+           context.user_data["SIZE"] = 0
+        
     if not has_doc:
         update.message.reply_text(
             "Please Send me Word file, or send me /cancel",
@@ -271,6 +301,13 @@ def word_to_pdf(update, context):
             file_name += ".docx"
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
+        
+        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
+        if  context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            del_user_files(context.user_data["Files"])
+            return WORD_PDF
+        
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
         ms = update.message.reply_text("Please wait , i am converting your file to pdf")
@@ -305,6 +342,8 @@ def ppt_to_pdf(update, context):
     has_doc = update.message.document or False
     bot = context.bot
     chat_id = update.message.chat.id
+    if "SIZE" not in context.user_data:
+        context.user_data['SIZE'] = 0
     if not has_doc:
         update.message.reply_text(
             "Please Send me Powerpoint file, or send me /cancel",
@@ -320,6 +359,13 @@ def ppt_to_pdf(update, context):
             file_name += ".ppt"
         else:
             file_name += ".pptx"
+        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
+        
+        if  context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            del_user_files(context.user_data["Files"])
+            return PPT_PDF
+        
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
         download_file.download(custom_path=download_address)
@@ -359,6 +405,9 @@ def excel_to_pdf(update, context):
 
     bot = context.bot
     chat_id = update.message.chat.id
+    if "SIZE" is not context.user_data:
+        context.user_data['SIZE'] = 0
+
     if not has_doc:
         update.message.reply_text(
             "Please Send me Excel file, or send me /cancel",
@@ -372,6 +421,13 @@ def excel_to_pdf(update, context):
         file_name = str(uuid.uuid1())
 
         file_name += ".xlsx"
+        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
+        
+        if  context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            del_user_files(context.user_data["Files"])
+            return EXCEL_PDF
+        
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
         download_file.download(custom_path=download_address)
@@ -409,10 +465,20 @@ def pdf_to_image(update, context):
     has_doc = update.message.document or False
     bot = context.bot
     chat_id = update.message.chat.id
+    if "SIZE" not in context.user_data:
+        context.user_data = 0
     if has_doc:
         ms = update.message.reply_text("Downloading the file")
         file_name = str(uuid.uuid1()) + ".pdf"
         file_address = os.path.join(_BASE_DIR_FILE, file_name)
+        
+        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
+        
+        if  context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            del_user_files(context.user_data["Files"])
+            return PDF_JPG
+        
         download_file = bot.getFile(has_doc["file_id"])
         download_file.download(custom_path=file_address)
         context.user_data["Files"].append(file_name)
@@ -487,7 +553,16 @@ def pdf_to_word(update, context):
         print(has_doc)
         if "Files" not in context.user_data:
             context.user_data["Files"] = []
+        if "SIZE" not in context.user_data:
+            context.user_data["SIZE"] = 0
             
+        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
+        
+        if context.user_data["SIZE"] > 50:
+            update.message.reply_text("Total Fize is more than your limitation")
+            del_user_files(context.user_data["Files"])
+            return PDF_WORD
+        
         ms = update.message.reply_text("Downloading the file")
         file_name = str(uuid.uuid1()) + ".pdf"
         file_address = os.path.join(_BASE_DIR_FILE, file_name)
@@ -499,6 +574,7 @@ def pdf_to_word(update, context):
             message_id=ms.message_id,
             text="Successfully Downloaded\nNow i am converting to word(document file) 🖼...",
         )
+        
         import time
 
         t0 = perf_counter()
