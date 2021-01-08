@@ -1,6 +1,6 @@
 import logging
 
-# PTB imports 
+# PTB imports
 from telegram import ReplyKeyboardMarkup, Update, message
 import telegram
 from telegram.ext import (
@@ -16,16 +16,17 @@ from telegram.ext import (
 from telegram.ext.dispatcher import run_async
 from telegram.ext.handler import Handler
 
-# Utility Import 
+# Utility Import
 import uuid
 from queue import Queue
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from utils import *
 
-_BASE_DIR = os.getcwd() 
+_BASE_DIR = os.getcwd()
 _BASE_DIR_FILE = os.path.join(_BASE_DIR, "files")
 
 TOKEN_ = os.getenv("TOKEN")
@@ -76,15 +77,25 @@ PDF_JPG, PDF_WORD, PDF_PPT, PDF_EXCEL, PDF_HTML = range(5)
 JPG_PDF, WORD_PDF, PPT_PDF, EXCEL_PDF, HTML_PDF = range(5, 10)
 
 
+def done(update, context):
+
+    update.message.reply_text(
+        "To start over send me /start"
+        "Thank you for using My bot, if you have any comment contact me @chapimenge",
+    )
+
+    return ConversationHandler.END
+
+
 def start(update: Update, context: CallbackContext) -> int:
     # for i in update:
     #     print(i)
     # print(dir(update))
     print("Startover")
-    if "Files" in  context.user_data and len(context.user_data['Files']) != 0:
+    if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
         print("Files yess")
-        for file in  context.user_data['Files']:
-            file_address = os.path.join(_BASE_DIR_FILE, file) 
+        for file in context.user_data["Files"]:
+            file_address = os.path.join(_BASE_DIR_FILE, file)
             print(file_address)
             try:
                 os.remove(file_address)
@@ -106,9 +117,9 @@ def start(update: Update, context: CallbackContext) -> int:
 
 
 def startover(update: Update, context: CallbackContext) -> int:
-    if "Files" in  context.user_data and len(context.user_data['Files']) != 0:
-        del_user_files(context.user_data['Files'])
-        
+    if "Files" in context.user_data and len(context.user_data["Files"]) != 0:
+        del_user_files(context.user_data["Files"])
+
     update.message.reply_text(
         "Hi! My name is Doctor File Convertor Bot. I will convert any files to and from PDF and other Formats. \n"
         "to see how to use the bot send /help\n"
@@ -173,26 +184,23 @@ def jpg_to_pdf(update, context):
         file_.sort()
         # print(file_)
         file_name = str(uuid.uuid1())
-        download_file = bot.getFile( file_[1][1] )
+        download_file = bot.getFile(file_[1][1])
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
-        print("Download Address", download_address )
+        print("Download Address", download_address)
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
-        update.message.reply_text(
-            "I received", reply_markup=done_keyboard_markup
-        )
+        update.message.reply_text("I received", reply_markup=done_keyboard_markup)
     elif has_document:
         in_file = update.message.document
         file_ext = in_file["mime_type"].split("/")[-1]
         file_name = str(uuid.uuid1()) + "." + file_ext
         file_ = [in_file["file_size"], in_file["file_id"], in_file["file_unique_id"]]
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
-        print("Download Address", download_address )
+        print("Download Address", download_address)
         download_file = bot.getFile(update.message.document["file_id"])
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
-        update.message.reply_text("I received.",reply_markup=done_keyboard_markup
-        )
+        update.message.reply_text("I received.", reply_markup=done_keyboard_markup)
     else:
         update.message.reply_text(
             "Please Send Me Photos you want to change to pdf. \nclick done when you finish!!!\n"
@@ -202,42 +210,52 @@ def jpg_to_pdf(update, context):
     return JPG_PDF
 
 
-
 def done_jpg_to_pdf(update, context):
-    if "Files" not in  context.user_data and len(context.user_data['Files']) == 0 :
+    if "Files" not in context.user_data and len(context.user_data["Files"]) == 0:
         update.message.reply_text("You Didn't Upload any file. Please Try Again!")
         return startover(update, context)
-    
+
     mid = update.message.reply_text(
         "Please wait it is converting your images to pdf ....."
     )
     # print(mid)
     bot = context.bot
     chat_id = update.message.chat.id
-    pdf_name = str(uuid.uuid1()) 
-    pdf_address = os.path.join(_BASE_DIR_FILE, pdf_name+".pdf")
+    pdf_name = str(uuid.uuid1())
+    pdf_address = os.path.join(_BASE_DIR_FILE, pdf_name + ".pdf")
     try:
-        pdf = process_image_to_pdf(context.user_data['Files'], pdf_name) + ".pdf"
+        pdf = process_image_to_pdf(context.user_data["Files"], pdf_name) + ".pdf"
         pdf_address = os.path.join(_BASE_DIR_FILE, pdf)
         with open(pdf_address, "rb") as pdf_file:
-            bot.edit_message_text(chat_id=chat_id,message_id=mid.message_id, text="Your file is Ready✅")
-            bot.send_document(chat_id=chat_id, document=pdf_file,filename="Converted image to pdf.pdf",caption=caption)
+            bot.edit_message_text(
+                chat_id=chat_id, message_id=mid.message_id, text="Your file is Ready✅"
+            )
+            bot.send_document(
+                chat_id=chat_id,
+                document=pdf_file,
+                filename="Converted image to pdf.pdf",
+                caption=caption,
+            )
         os.remove(pdf_address)
-        del_user_files(context.user_data['Files'])
+        del_user_files(context.user_data["Files"])
         # print("Successfully Sent and Removed")
-        return startover(update, context)
-    
+        return done(update, context)
+
     except Exception as e:
         del_one_file(pdf_address)
         update.message.reply_text("Sorry 😔, Something is wrong! Please Try Again Later")
-        return startover(update ,context)
+        return startover(update, context)
+
 
 def word_to_pdf(update, context):
     has_doc = update.message.document or False
     bot = context.bot
     chat_id = update.message.chat.id
     if not has_doc:
-        update.message.reply_text("Please Send me Word file, or send me /cancel",reply_markup=telegram.ReplyKeyboardRemove())
+        update.message.reply_text(
+            "Please Send me Word file, or send me /cancel",
+            reply_markup=telegram.ReplyKeyboardRemove(),
+        )
         return WORD_PDF
     else:
         print(has_doc)
@@ -245,26 +263,149 @@ def word_to_pdf(update, context):
             context.user_data["Files"] = []
         file_name = str(uuid.uuid1())
         if has_doc.mime_type == "application/msword":
-            file_name += '.doc'
+            file_name += ".doc"
         else:
             file_name += ".docx"
-        download_address = os.path.join(_BASE_DIR_FILE, file_name) 
+        download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
-        ms = update.message.reply_text("Please wait , i am converting your file to pdf") 
+        ms = update.message.reply_text("Please wait , i am converting your file to pdf")
         convert_2_pdf = process_word_to_pdf(file_name)
-        if convert_2_pdf == -1 :
-            bot.edit_message_text(chat_id=chat_id, message_id=ms.message_id, text="Sorry there is some problem couldn't convert your file 😔")
-        else: 
+        if convert_2_pdf == -1:
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text="Sorry there is some problem couldn't convert your file 😔",
+            )
+        else:
             file_address = os.path.join(_BASE_DIR_FILE, convert_2_pdf)
             print(file_address)
             with open(file_address, "rb") as pdf_file:
-                bot.edit_message_text(chat_id=chat_id,message_id=ms.message_id, text="Your file is Ready✅")
-                bot.send_document(chat_id=chat_id, document=pdf_file,filename="Converted word to pdf.pdf",caption=caption)
+                bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=ms.message_id,
+                    text="Your file is Ready✅",
+                )
+                bot.send_document(
+                    chat_id=chat_id,
+                    document=pdf_file,
+                    filename="Converted word to pdf.pdf",
+                    caption=caption,
+                )
             del_one_file(convert_2_pdf)
             del_user_files(context.user_data["Files"])
         return WORD_PDF
+
+
+def ppt_to_pdf(update, context):
+    print("PowerPoint")
+    print("PowerPoint")
+    print("PowerPoint")
+    print("PowerPoint")
+    print(update)
+    has_doc = update.message.document or False
+    bot = context.bot
+    chat_id = update.message.chat.id
+    if not has_doc:
+        update.message.reply_text(
+            "Please Send me Powerpoint file, or send me /cancel",
+            reply_markup=telegram.ReplyKeyboardRemove(),
+        )
+        return PPT_PDF
+    else:
+        print(has_doc)
+        if "Files" not in context.user_data:
+            context.user_data["Files"] = []
+        file_name = str(uuid.uuid1())
+        if has_doc.mime_type == "application/vnd.ms-powerpoint":
+            file_name += ".ppt"
+        else:
+            file_name += ".pptx"
+        download_address = os.path.join(_BASE_DIR_FILE, file_name)
+        download_file = bot.getFile(has_doc["file_id"])
+        download_file.download(custom_path=download_address)
+        context.user_data["Files"].append(file_name)
+        ms = update.message.reply_text("Please wait , i am converting your file to pdf")
+        convert_2_pdf = process_word_to_pdf(file_name)
+        if convert_2_pdf == -1:
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text="Sorry there is some problem couldn't convert your file 😔",
+            )
+        else:
+            file_address = os.path.join(_BASE_DIR_FILE, convert_2_pdf)
+            print(file_address)
+            with open(file_address, "rb") as pdf_file:
+                bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=ms.message_id,
+                    text="Your file is Ready✅",
+                )
+                bot.send_document(
+                    chat_id=chat_id,
+                    document=pdf_file,
+                    filename="Converted powerpoint to pdf.pdf",
+                    caption=caption,
+                )
+            del_one_file(convert_2_pdf)
+            del_user_files(context.user_data["Files"])
+        return startover(update, context)
+
+
+def excel_to_pdf(update, context):
+    print("excel excel")
+    print(update.message.document)
+    has_doc = update.message.document or False
+    
+    bot = context.bot
+    chat_id = update.message.chat.id
+    if not has_doc:
+        update.message.reply_text(
+            "Please Send me Excel file, or send me /cancel",
+            reply_markup=telegram.ReplyKeyboardRemove(),
+        )
+        return EXCEL_PDF
+    else:
+        print(has_doc)
+        if "Files" not in context.user_data:
+            context.user_data["Files"] = []
+        file_name = str(uuid.uuid1())
+
+        file_name += ".xlsx"
+        download_address = os.path.join(_BASE_DIR_FILE, file_name)
+        download_file = bot.getFile(has_doc["file_id"])
+        download_file.download(custom_path=download_address)
+        context.user_data["Files"].append(file_name)
+        ms = update.message.reply_text("Please wait , i am converting your file to pdf")
+        convert_2_pdf = process_word_to_pdf(file_name)
+        if convert_2_pdf == -1:
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=ms.message_id,
+                text="Sorry there is some problem couldn't convert your file 😔",
+            )
+            return startover(update, context)
+        else:
+            file_address = os.path.join(_BASE_DIR_FILE, convert_2_pdf)
+            # print(file_address)
+            with open(file_address, "rb") as pdf_file:
+                bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=ms.message_id,
+                    text="Your file is Ready✅",
+                )
+                bot.send_document(
+                    chat_id=chat_id,
+                    document=pdf_file,
+                    filename="Converted Excel to pdf.pdf",
+                    caption=caption,
+                )
+            del_one_file(convert_2_pdf)
+            del_user_files(context.user_data["Files"])
+            return done(update, context)
+
 
 def main():
     updater = Updater(token=TOKEN_)
@@ -310,13 +451,13 @@ def main():
                     Filters.regex(
                         "^(PPT to PDF)$",
                     ),
-                    from_pdf_convertor,
+                    ppt_to_pdf,
                 ),
                 MessageHandler(
                     Filters.regex(
                         "^(Excel To PDf)$",
                     ),
-                    from_pdf_convertor,
+                    excel_to_pdf,
                 ),
                 MessageHandler(
                     Filters.regex(
@@ -377,10 +518,26 @@ def main():
             ],
             WORD_PDF: [
                 MessageHandler(
-                    Filters.document.doc | Filters.document.docx,
-                    word_to_pdf
+                    Filters.document.doc | Filters.document.docx, word_to_pdf
                 )
-            ]
+            ],
+            PPT_PDF: [
+                MessageHandler(
+                    Filters.document.file_extension("ppt")
+                    | Filters.document.file_extension("pptx"),
+                    ppt_to_pdf,
+                ),
+            ],
+            EXCEL_PDF: [
+                MessageHandler(
+                    Filters.document.file_extension("xlsx")
+                    | Filters.document.file_extension(".xlsm")
+                    | Filters.document.file_extension("xlsb")
+                    | Filters.document.file_extension("xltx")
+                    | Filters.document.file_extension("xltm"),
+                    excel_to_pdf 
+                )
+            ],
         },
         fallbacks=[
             MessageHandler(Filters.regex("^(start|done|cancel)$"), startover),

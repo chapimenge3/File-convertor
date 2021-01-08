@@ -38,6 +38,8 @@ def del_user_files(list):
             os.remove(file_address)
         except:
             pass
+
+
 def del_one_file(file):
     try:
         os.remove(file)
