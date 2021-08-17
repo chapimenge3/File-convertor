@@ -190,10 +190,6 @@ def jpg_to_pdf(update, context):
         # print("Files")
         # print(file_)
         file_name = str(uuid.uuid1())
-        context.user_data["SIZE"] += int( 0.5 + (file_[-1][0]/10**6) )
-        if  context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            return JPG_PDF
         print("FIles size" , file_[-1][0]) 
         download_file = bot.getFile(file_[-1][1])
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
@@ -205,10 +201,6 @@ def jpg_to_pdf(update, context):
         in_file = update.message.document
         file_ext = in_file["mime_type"].split("/")[-1]
         file_name = str(uuid.uuid1()) + "." + file_ext
-        context.user_data["SIZE"] += int( 0.5 + (in_file['file_size']/10**6) )
-        if  context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            return JPG_PDF
         # print(f"File size = {in_file['file_size']}")
         
         file_ = [in_file["file_size"], in_file["file_id"], in_file["file_unique_id"]]
@@ -239,11 +231,6 @@ def done_jpg_to_pdf(update, context):
     if "SIZE" not in context.user_data:
        context.user_data["SIZE"] = 0
         
-    if context.user_data["SIZE"] > 50:
-        update.message.reply_text("Total Fize is more than your limitation")
-        del_user_files(context.user_data["Files"])
-        return startover(update, context)
-    
     bot = context.bot
     chat_id = update.message.chat.id
     pdf_name = str(uuid.uuid1())
@@ -302,11 +289,6 @@ def word_to_pdf(update, context):
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
         
-        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
-        if  context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            del_user_files(context.user_data["Files"])
-            return WORD_PDF
         
         download_file.download(custom_path=download_address)
         context.user_data["Files"].append(file_name)
@@ -359,12 +341,6 @@ def ppt_to_pdf(update, context):
             file_name += ".ppt"
         else:
             file_name += ".pptx"
-        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
-        
-        if  context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            del_user_files(context.user_data["Files"])
-            return PPT_PDF
         
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
@@ -423,10 +399,6 @@ def excel_to_pdf(update, context):
         file_name += ".xlsx"
         context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
         
-        if  context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            del_user_files(context.user_data["Files"])
-            return EXCEL_PDF
         
         download_address = os.path.join(_BASE_DIR_FILE, file_name)
         download_file = bot.getFile(has_doc["file_id"])
@@ -473,11 +445,6 @@ def pdf_to_image(update, context):
         file_address = os.path.join(_BASE_DIR_FILE, file_name)
         
         context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
-        
-        if  context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            del_user_files(context.user_data["Files"])
-            return PDF_JPG
         
         download_file = bot.getFile(has_doc["file_id"])
         download_file.download(custom_path=file_address)
@@ -555,14 +522,7 @@ def pdf_to_word(update, context):
             context.user_data["Files"] = []
         if "SIZE" not in context.user_data:
             context.user_data["SIZE"] = 0
-            
-        context.user_data["SIZE"] += int( 0.5 + (has_doc['file_size']/10**6) )
-        
-        if context.user_data["SIZE"] > 50:
-            update.message.reply_text("Total Fize is more than your limitation")
-            del_user_files(context.user_data["Files"])
-            return PDF_WORD
-        
+
         ms = update.message.reply_text("Downloading the file")
         file_name = str(uuid.uuid1()) + ".pdf"
         file_address = os.path.join(_BASE_DIR_FILE, file_name)
