@@ -238,12 +238,15 @@ def done_jpg_to_pdf(update, context):
     pdf_address = os.path.join(_BASE_DIR_FILE, pdf_name + ".pdf")
     try:
         pdf = process_image_to_pdf(context.user_data["Files"])
+        bot.send_document(
+                    chat_id=chat_id, text="your file is Converted. I am sending it ..."
+                )
         for i in pdf:
             
             pdf_address = os.path.join(_BASE_DIR_FILE, f"{i}.pdf")
             with open(pdf_address, "rb") as pdf_file:
-                bot.edit_message_text(
-                    chat_id=chat_id, message_id=mid.message_id, text="Your file is Ready✅"
+                bot.send_document(
+                    chat_id=chat_id, text="Your file is Ready✅"
                 )
                 bot.send_document(
                     chat_id=chat_id,
