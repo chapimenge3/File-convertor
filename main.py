@@ -37,8 +37,9 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-caption = "😁 Converted By @fileconverterallbot made by @chapimenge"
+bot = telegram.Bot(TOKEN_)
+username = bot.get_me().username
+caption = f"😁 Converted By @{username} made by @chapimenge"
 
 to_pdf_reply_keyboard = [
     [
@@ -236,20 +237,23 @@ def done_jpg_to_pdf(update, context):
     pdf_name = str(uuid.uuid1())
     pdf_address = os.path.join(_BASE_DIR_FILE, pdf_name + ".pdf")
     try:
-        pdf = process_image_to_pdf(context.user_data["Files"], pdf_name) + ".pdf"
-        pdf_address = os.path.join(_BASE_DIR_FILE, pdf)
-        with open(pdf_address, "rb") as pdf_file:
-            bot.edit_message_text(
-                chat_id=chat_id, message_id=mid.message_id, text="Your file is Ready✅"
-            )
-            bot.send_document(
-                chat_id=chat_id,
-                document=pdf_file,
-                filename="fileconverterallbot image-to-pdf.pdf",
-                caption=caption,
-            )
-        os.remove(pdf_address)
-        del_user_files(context.user_data["Files"])
+        pdf = process_image_to_pdf(context.user_data["Files"])
+        for i in pdf:
+            
+            pdf_address = os.path.join(_BASE_DIR_FILE, f"{i}.pdf")
+            with open(pdf_address, "rb") as pdf_file:
+                bot.edit_message_text(
+                    chat_id=chat_id, message_id=mid.message_id, text="Your file is Ready✅"
+                )
+                bot.send_document(
+                    chat_id=chat_id,
+                    document=pdf_file,
+                    filename="fileconverterallbot image-to-pdf.pdf",
+                    caption=caption,
+                )
+                
+            os.remove(pdf_address)
+            del_user_files(context.user_data["Files"])
         # print("Successfully Sent and Removed")
         return done(update, context)
 
