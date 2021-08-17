@@ -18,28 +18,14 @@ _BASE_DIR = os.getcwd()
 _BASE_DIR_FILE = os.path.join(_BASE_DIR, "files")
 
 
-def process_image_to_pdf(files):
+def process_image_to_pdf(files, pdf_name):
     img = []
-    tmp = [] 
-    for fname in files:
-        path = os.path.join(_BASE_DIR_FILE, fname)
-        tmp.append(path)
-        if len(tmp) == 50:
-            img.append(tmp)
-            tmp = []
-    if tmp:
-        img.append(tmp)
-    pdf_names = [
-        str(uuid.uuid1()) for _ in range(len(img))
-    ]
-    for i,j in zip(img, pdf_names):
-        try:
-            with open(f"{_BASE_DIR_FILE}/{j}.pdf","wb") as fil:
-                fil.write(img2pdf.convert(i))
-        except:
-            pass
-        
-    return pdf_names
+    with open(f"{_BASE_DIR_FILE}/{pdf_name}.pdf","wb") as fil:
+        for fname in files:
+            path = os.path.join(_BASE_DIR_FILE, fname)
+            img.append(path)
+        fil.write(img2pdf.convert(img))
+    return pdf_name
 
 def process_word_to_pdf(file):
     file_address = os.path.join(_BASE_DIR_FILE, file)

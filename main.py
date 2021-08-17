@@ -235,28 +235,35 @@ def done_jpg_to_pdf(update, context):
     bot = context.bot
     chat_id = update.message.chat.id
     pdf_name = str(uuid.uuid1())
-    pdf_address = os.path.join(_BASE_DIR_FILE, pdf_name + ".pdf")
+    pdf_address = os.path.join(_BASE_DIR_FILE, f"{pdf_name}.pdf")
+    
     try:
-        pdf = process_image_to_pdf(context.user_data["Files"])
+        pdf = process_image_to_pdf(context.user_data["Files"], pdf_name)
+        if not pdf:
+            
+            bot.send_message(
+                    chat_id=chat_id, text="Error happened. please try again or report to @chapimenge"
+                )
         bot.send_message(
                     chat_id=chat_id, text="your file is Converted. I am sending it ..."
                 )
-        for i in pdf:
-            
-            pdf_address = os.path.join(_BASE_DIR_FILE, f"{i}.pdf")
-            with open(pdf_address, "rb") as pdf_file:
-                bot.send_message(
-                    chat_id=chat_id, text="Your file is Ready✅"
-                )
-                bot.send_document(
-                    chat_id=chat_id,
-                    document=pdf_file,
-                    filename="fileconverterallbot image-to-pdf.pdf",
-                    caption=caption,
-                )
-                
+        
+        pdf_address = os.path.join(_BASE_DIR_FILE, f"{pdf_name}.pdf")
+        bot.send_message(
+            chat_id=chat_id, text="Your file is Ready✅"
+        )
+        try:
+            bot.send_document(
+                chat_id=chat_id,
+                document=open(pdf_address, "rb"),
+                filename="fileconverterallbot image-to-pdf.pdf",
+                caption=caption,
+            )
             os.remove(pdf_address)
             del_user_files(context.user_data["Files"])
+        except Exception as e:
+            print(e)
+            
         # print("Successfully Sent and Removed")
         return done(update, context)
 
